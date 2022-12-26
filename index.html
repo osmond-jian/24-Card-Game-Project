@@ -15,12 +15,15 @@
 	<body>
 		<section class="deck">
 			<h1>A Deck of Cards</h1>
-			<a href="javascript:void(0)" class="button" onclick="gameObject.moveFourToField()">Start Game</a>
+			<a href="javascript:void(0)" class="button" onclick="gameObject.moveFourToField('graveDeck', 'gameDeck')">Start Game</a>
 			<a href="javascript:void(0)" class="button" onclick="gameObject.shuffleDeck(gameObject.gameDeck)">Shuffle</a>
 			<div id="deck"></div>
 		</section>
 		<section class="calcButton">
-			<div class="display"></div>
+			<div class="displayMath"></div>
+		</section>
+		<section class="playerScores">
+
 		</section>
 
 		<script type="text/javascript" src="js/main.js"></script>

@@ -11,12 +11,29 @@ const gameObject = {
     fieldDeck:[],
 
     graveDeck:[],
+
+    mathExpression:[],
 //create deck function  Are these the only dictonary pairings we want for a card object?
     newDeck: function newDeck () {
+    //turn Ace, Jack, Queen, King to numerical equivalent
+        function letterToNumber (letter){
+            if (letter === 'A' || letter === 'a'){
+                return '1';
+            }else if (letter ==='J' || letter ==='j'){
+                return '11';
+            }else if (letter === 'Q'|| letter ==='q'){
+                return '12';
+            }else if (letter ==='K'||letter ==='k'){
+                return '13';
+            }else{
+                return letter;
+            }
+        }
+    // loop to create the array of card objects
         let deck = new Array();
             for (let i = 0; i < suits.length; i++){
                 for (let x = 0; x < values.length; x++){
-                    let card ={Value: values[x], Suit: suits[i], formula:`${values[x]}`, type:'number'};
+                    let card ={name:`${values[x]+suits[i]}`, Value: values[x], Suit: suits[i], formula:`${letterToNumber(values[x])}`, type:'number', selected:false};
                     deck.push(card);
                 }
             }
@@ -31,7 +48,6 @@ const gameObject = {
     
             deck[cardSwitch1] = deck[cardSwitch2];
             deck[cardSwitch2] = switch3;
-    
         }
     },
 //renders cards in deck onto DOM
@@ -51,11 +67,15 @@ const gameObject = {
             card.appendChild(suit);
     
             document.getElementById("deck").appendChild(card);
+            card.setAttribute("id", `${deck[i].name}`);
         }
     },
 //unrenders cards of deck from the DOM
     unrenderDeck: function unrenderDeck (){
-        document.getElementById("deck").innerHTML = "";
+        const deckElement = document.getElementById(`deck`)
+        while (deckElement.firstChild){
+            deckElement.removeChild(deckElement.firstChild);
+        }
     },    
 //deals a card from the top of the deck
     dealCard: function dealCard (deck){
@@ -66,21 +86,31 @@ const gameObject = {
         gameObject.gameDeck = gameObject.newDeck();
         gameObject.fieldDeck = [];
         gameObject.graveDeck = [];
-        
+
+        gameObject.mathExpression = [];
+        mathObject.unrenderExpression();
+        gameObject.player1Score = 0;
+
         console.log ("Reset Game");
         console.log (gameObject.gameDeck); //remove after
 
     },
-//move 4 cards to field deck
-    moveFourToField: function moveFourToField (){
+//moves all cards from field deck to "fieldDeckToThisDeck", and put 4 cards into field deck from "deckToFieldDeck"
+    moveFourToField: function moveFourToField (fieldDeckToThisDeck, deckToFieldDeck){
         while (gameObject.fieldDeck.length > 0){
-            gameObject.graveDeck.push(gameObject.dealCard(gameObject.fieldDeck));
+            if (fieldDeckToThisDeck === 'graveDeck'){
+                gameObject.graveDeck.push(gameObject.dealCard(gameObject.fieldDeck));
+            }else if (fieldDeckToThisDeck === 'gameDeck'){
+                gameObject.gameDeck.push(gameObject.dealCard(gameObject.fieldDeck));
+            }
         }
-        
-        for (i=0; i<= 3; i++){
-            gameObject.fieldDeck.push(gameObject.dealCard(gameObject.gameDeck));
-        }
+        gameObject.shuffleDeck(gameObject.gameDeck);
 
+        for (i=0; i<= 3; i++){
+            if (deckToFieldDeck === 'gameDeck'){
+                gameObject.fieldDeck.push(gameObject.dealCard(gameObject.gameDeck));
+            }
+        }
         gameObject.renderDeck(gameObject.fieldDeck);
     },
 //forfeit round
@@ -91,11 +121,10 @@ const gameObject = {
 }
 
 // group new object for math and associated things
-
 const mathObject = {
 //declare variables/properties
 //current expression will be used to keep track of the math expression being built to make '24'
-    currentExpression:'',
+    currentExpression:[],
 //player score
     player1Score:0,
     player2Score:0,
@@ -103,47 +132,12 @@ const mathObject = {
     player4Score:0,
 //declare methods/functions
     evaluate24: function evaluate24 (expression){
-        if (Number(expression) == Number('24') ){
+        let answer = expression.join('')
+        if (eval(answer) == Number('24') ){
             return true;
         }else{
             return false;
         }
-    },
-//add button
-    addButton: function addButton (){
-        console.log('the add button is clicked');
-    },
-//subtract button
-    subtractButton: function subtractButton(){
-        console.log('the subtract button is clicked');
-    },
-//multiply button
-    multiplyButton: function multiplyButton(){
-        console.log('the multiply button is clicked');
-    },
-//divide button
-    divideButton: function divideButton(){
-        console.log('the divide button is clicked');
-    },
-//parenthesis button
-    bracketsButton: function bracketsButton(){
-        console.log('the brackets button is clicked');
-    },
-//exponents button
-    exponentButton: function exponentButton(){
-        console.log('the exponents button is clicked');
-    },
-//factorial button *secret*
-    factorialButton: function factorialButton(){
-        console.log('the factorial button is clicked');
-    },
-//modulus button *secret*
-    modulusButton: function modulusButton(){
-        console.log('the modulus button is clicked');
-    },
-//backspace button
-    backSpaceButton: function backSpaceButton(){
-        console.log('the backspace button is clicked');
     },
 //enter button
     enterButton: function enterButton(){
@@ -158,10 +152,75 @@ const mathObject = {
     },
 //generic card button
     cardButton: function cardButton(card){
-        console.log(`the ${card} card button is clicked`);
+        console.log(`the ${card.Value} of ${card.Suit} card is selected`);
+        card.selected = !card.selected
+        if (card.selected === true){
+            gameObject.mathExpression.push(card.formula);
+            card.index = gameObject.mathExpression.length - 1
+        }else{
+            gameObject.mathExpression.splice(card.index, gameObject.mathExpression.length - card.index);
+            gameObject.fieldDeck.forEach(fieldCard =>{
+                if (fieldCard.index > card.index){
+                    fieldCard.index = null;
+                    fieldCard.selected = !fieldCard.selected;
+                }
+            })
+            card.index = null;
+        }
+        mathObject.renderExpression(gameObject.mathExpression);
     },
-
-
+//generic operator button
+    calculate: function calculate (button){
+        console.log (`the ${button.name} button has been clicked`);
+        if (button.type == 'operator'){
+            gameObject.mathExpression.push(button.formula);
+        }else if (button.type =='key'){
+            if (button.name == 'BackSpace'){
+                gameObject.mathExpression.splice(gameObject.mathExpression.length - 1, 1);
+                gameObject.fieldDeck.forEach(card =>{
+                    if (gameObject.mathExpression.length <= card.index){
+                        card.selected = false;
+                        card.index = null;
+                    }
+                })
+            }else if(button.name =='Forfeit'){
+                gameObject.giveUpButton();
+                gameObject.mathExpression = [];
+                gameObject.fieldDeck.forEach(card =>{
+                    card.selected = false;
+                    card.index = null;
+                })
+                gameObject.moveFourToField('gameDeck', 'gameDeck');
+            }else if(button.name =='Calculate'){
+                let selectCheck = 0
+                gameObject.fieldDeck.forEach(card =>{card.selected? selectCheck++ : null})
+                if (selectCheck === 4){
+                    if (mathObject.evaluate24(gameObject.mathExpression)){
+                        console.log ('Good job!');
+                        mathObject.player1Score += 1;
+                    }else{
+                        console.log ('wrong answer!');
+                        mathObject.mathExpression = [];
+                        gameObject.fieldDeck.forEach(card =>{
+                            card.selected = false;
+                            card.index = null;
+                        })
+                    }
+                }else{
+                    console.log('All cards must be selected');
+                }
+            }
+        }
+        mathObject.renderExpression(gameObject.mathExpression);
+    },
+//rendering expression onto display div
+    renderExpression: function renderExpression(expressionArray){
+        let displayExpression = expressionArray.join("").replace('*','x');
+        document.querySelector('.displayMath').innerHTML = `${displayExpression}`;
+    },
+    unrenderExpression: function unrenderExpression(){
+        document.querySelector('.displayMath').innerHTML ='';
+    }
 }
 
 //calculator button objects
@@ -224,7 +283,7 @@ const calculatorButtons = [
 
     {
         name:"BackSpace",
-        symbol:"<-",
+        symbol:"⌫",
         formula:"false",
         type:"key",
     },
@@ -248,16 +307,36 @@ const calculatorButtons = [
         symbol:"!",
         formula:"none",
         type:"operator",
-    }
-    
+    }   
 ]
 
 //create buttons
 calculatorButtons.forEach(button => {
     const calcButton = document.querySelector(".calcButton");
-    calcButton.innerHTML += `<a href='javascript:void(0)' class = "button" onclick="mathObject.${button.name}Button()"> ${button.symbol}</a>`;
+    calcButton.innerHTML += `<a href='javascript:void(0)' class="button" id="${button.name}"> ${button.symbol}</a>`;
 })
 
+//create event listeners for the buttons
+document.body.addEventListener("click", event => {
+    const targetButton = event.target;
+    if (targetButton.className.includes('card') || targetButton.parentElement.className.includes('card')){
+        gameObject.fieldDeck.forEach(card =>{
+            if (card.name == targetButton.id || card.name == targetButton.parentElement.id){
+                mathObject.cardButton(card);
+            }
+        })
+    }else{
+        calculatorButtons.forEach(button => {
+            if(button.name == targetButton.id){
+                mathObject.calculate(button); //did not assign button yet
+            }
+        })
+    }
+})
+
+document.body.addEventListener("click", event =>{
+    console.log (event);
+})
 
 
 
