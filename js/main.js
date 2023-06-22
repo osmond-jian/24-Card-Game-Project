@@ -16,7 +16,7 @@ const gameObject = {
 //create deck function  Are these the only dictonary pairings we want for a card object?
     newDeck: function newDeck () {
     //turn Ace, Jack, Queen, King to numerical equivalent
-        function letterToNumber (letter){
+        function letterToNumber (letter){ //again probably a more optimal way to implement this besides the conditionals
             if (letter === 'A' || letter === 'a'){
                 return '1';
             }else if (letter ==='J' || letter ==='j'){
@@ -33,7 +33,14 @@ const gameObject = {
         let deck = new Array();
             for (let i = 0; i < suits.length; i++){
                 for (let x = 0; x < values.length; x++){
-                    let card ={name:`${values[x]+suits[i]}`, Value: values[x], Suit: suits[i], formula:`${letterToNumber(values[x])}`, type:'number', selected:false};
+                    let card ={
+                        name:`${values[x]+suits[i]}`,
+                        Value: values[x],
+                        Suit: suits[i],
+                        formula:`${letterToNumber(values[x])}`,
+                        type:'number',
+                        selected:false
+                    };
                     deck.push(card);
                 }
             }
@@ -84,8 +91,11 @@ const gameObject = {
 //new game
     newGame: function newGame(){
         gameObject.gameDeck = gameObject.newDeck();
+        gameObject.shuffleDeck(gameObject.gameDeck);
         gameObject.fieldDeck = [];
         gameObject.graveDeck = [];
+
+        //maybe add some fancy alert for a new game?
 
         gameObject.mathExpression = [];
         mathObject.unrenderExpression();
@@ -98,7 +108,7 @@ const gameObject = {
 //moves all cards from field deck to "fieldDeckToThisDeck", and put 4 cards into field deck from "deckToFieldDeck"
     moveFourToField: function moveFourToField (fieldDeckToThisDeck, deckToFieldDeck){
         while (gameObject.fieldDeck.length > 0){
-            if (fieldDeckToThisDeck === 'graveDeck'){
+            if (fieldDeckToThisDeck === 'graveDeck'){ //probably a more optimal way of doing this besides the conditional
                 gameObject.graveDeck.push(gameObject.dealCard(gameObject.fieldDeck));
             }else if (fieldDeckToThisDeck === 'gameDeck'){
                 gameObject.gameDeck.push(gameObject.dealCard(gameObject.fieldDeck));
